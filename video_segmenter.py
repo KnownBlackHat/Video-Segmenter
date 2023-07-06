@@ -17,15 +17,15 @@ except IndexError:
     sys.exit(1)
 
 
-def get_video_duration_size(video_path: Path) -> Tuple[int, int]:
+def get_video_duration_size(video_path: Path) -> Tuple[float, float]:
     """Returns the duration & size of a video in Minutes & Mb."""
     command = ['ffprobe', '-v', 'error', '-show_entries',
                'format=duration', '-of',
                'default=noprint_wrappers=1:nokey=1', video_path]
     result = subprocess.run(command, capture_output=True, text=True)
     duration = float(result.stdout)
-    return (round(duration),
-            round(video_path.stat().st_size / (1000 ** 2)))
+    return (duration,
+            video_path.stat().st_size / (1024 ** 2))
 
 
 def main():
@@ -33,8 +33,10 @@ def main():
     print(f"\n[+] File: {media.name}")
     print(f"[-] Duration: {duration} minutes")
     print(f"[-] Size: {size} Mb")
-    segment_duration = round((duration / size) * max_size) - 30
-    print(f"[-] Segment Duration: {round(segment_duration / 60)} minutes")
+    segment_duration = ((duration / size) * max_size) - 100
+    if (segment_duration <= 0):
+        raise ValueError("Max Size Is Too Low")
+    print(f"[-] Segment Duration: {segment_duration // 60} minutes")
     command = ['ffmpeg', '-i', media, '-c', 'copy', '-map', '0',
                '-segment_time', str(segment_duration), '-f',
                'segment', '-reset_timestamps', '1',
