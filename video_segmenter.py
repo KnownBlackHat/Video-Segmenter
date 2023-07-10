@@ -33,14 +33,18 @@ def main():
     print(f"\n[+] File: {media.name}")
     print(f"[-] Duration: {duration} minutes")
     print(f"[-] Size: {size} Mb")
-    segment_duration = ((duration / size) * max_size) - 100
+    if (size <= max_size):
+        raise ValueError(f"[!] Video Size is Already less than {max_size} Mb")
+    segment_duration = ((duration / size) * max_size)
     if (segment_duration <= 0):
         raise ValueError("Max Size Is Too Low")
+    out_path = Path(f'{save_dir}/{media.name}')
+    out_path.mkdir()
     print(f"[-] Segment Duration: {segment_duration // 60} minutes")
     command = ['ffmpeg', '-i', media, '-c', 'copy', '-map', '0',
                '-segment_time', str(segment_duration), '-f',
                'segment', '-reset_timestamps', '1',
-               f'{save_dir}/{media.name.split(".")[-2]}%03d.mp4']
+               f'{out_path.absolute()}/%03d.mp4']
     subprocess.run(command, capture_output=True)
 
 
